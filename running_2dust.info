@@ -1,0 +1,211 @@
+
+
+
+Description of output/input files for 2dust code:
+/Users/sosey/Desktop/2dust_outputs.txt
+
+**************
+* 2DUST.EXE: *
+**************
+
+INPUT:
+--------
+?.dat: This file contains the running parameters for the task and has the following form:
+
+NRAD 	NQ							#Number radial grids, Number of quadrature grids
+MXSTEP	VSPACE							#max step number allowed, spacing factor for 
+									step size (decrease for larger size)
+DFLAG	SFLAG	BFLAG						#mass/number density(mass den=0), 
+									scattering (iso=0, aniso=1),
+									bicone opening (none=0,1=bicone)
+Rstar[Rsun]   Tstar 						#stellar radius (Rsun), Tstar 
+									[use Tstar for AGN or -Tstar for input spec]
+Distance [kpc]							#distance to the source
+Velocity [km/s]							#expansion velocity
+A	B	C	D	E	THcrit/F 		#dfunc parameters, thcrit is bicone angle
+									 see dfunc.f90
+Tau0	N0							#optical depth along equator, n_0th wavelength in the grid
+Rmin (F1)	Rmax/Rmin (F2)	Rsw/Rmin(F3)			#in arcsec, minimum shell radius, 
+								 ratio of max to Rmin, ratio of super wind to Rmin	
+									Rsw will only be used if it is defined in dfunc.90	
+Nlayer								#number of layers
+Rlayer1	Rlayer2	..... Rmin					#location of composition boundries
+
+***try using Double precision version of 2dust if the ratio of outer to inner dust
+shell radius is > 200
+
+datafiles.dat:  The source of all the input/output names/files.
+		These file names are just the ROOT name  and they are
+		all assumed to have a '.dat' suffix
+
+0 		! Interactive mode switch [IOFLAG]
+shell 		! Input parameter file name [FNAME]
+specgrid 	! Wavelength grid file name [SPEC]
+quad45		! theta directional Quadrature file name [QUAD]
+shell_stuff 	! Default output file name [STUFF]
+dprop 		! Dust properties file name [PROP]
+xsec 		! Cross sections file name [XSEC]
+
+
+dprop.dat should have the following form:
+
+1 0 							! XFLAG, NFLAG	
+2 							! NGTYPE for layer 1
+1 3.2 0.50 3.5 0.001 1.0 nk_dorschner95_olmg40.dat 	! SD RHO MASSWT GAMMA Amin Amax NKFILE
+1 3.2 0.50 3.5 0.001 1.0 nk_dwsuvSil.optical_rev 	! SD RHO MASSWT GAMMA Amin Amax NKFILE
+2 							! NGTYPE for layer 2
+2 3.2 0.50 3.5 0.001 1.0 nk_dorschner95_olmg40.dat 	! SD RHO MASSWT GAMMA Amin Amax NKFILE
+2 3.2 0.50 3.5 0.001 1.0 nk_dwsuvSil.optical_rev 	! SD RHO MASSWT GAMMA Amin Amax NKFILE
+
+XFLAG=1: MIE calculations performed and results WRITTEN to xsec file
+XFLAT=0: previous cross-section calculations READ from xsec file
+NFLAG=0: dust property averaging done over size space
+NFLAG=1: Harrington averaging done for dust property
+NFLAG=2: radiative transfer done with Harrington averaging, but after convergence emission contribution
+	from each dust species is followed
+NFLAG=3: Same as 2, but quantum heating is also accounted for with non-linear heating of small particles, contributions
+	from these superheated dust grains is included.
+	
+		SizeQ.dat created: details dust-size and corresponding Q values
+		XsecEXP.dat create: records cross-sections for each size and wavelength
+
+NGTYPE: number of grain species in the first layer
+SD=1: MRN function used, amin and amax define the range of the size distributions, gamma sets the power coefficient
+SD=2: KMH function used, amin sets the lower limit of the size distribution, amax sets the exponential factor in the fall off function
+	size-space integration done from amin to infinity
+MASSWT: mass weight of the species (the sum of mass weights in a layer must be 1)
+
+**number density at a given location is multiplied by the cross section to get the optical depth
+
+NKFILE: the name for each n & k file (in the form  "wavelength  n  k ")
+ 
+
+xsec.dat: ( avgmass[g cm -3], wavelength[um], k-absorption cross sec[cm2], sigma - scattering cross section[cm2], G - asymmetric parameter)
+	the above line repeats for each wavelength, then
+        the whole set repeats for each layer
+	avgmass is the size and composition averaged mass 
+	
+
+
+specgrid.dat: (wavelength)
+      specified in this file
+
+sourceflux.dat: This is for inputting a spectrum into the code, the file must
+	        be of the form:
+
+		Luminosity of the source (in Lsun)
+		Wavelength (microns)   Flux (Jy)
+
+		repeat the second line for all wavelengths
+	
+
+  **the n&k values MUST cover the entire wavelength range you have in specgrid.dat
+  if they dont, 2dust will attemp to extrapolate the needed values with a spline fit.
+  	still investigating 2dust use of the spline fit. If in doubt, extrapolate the 
+ 	values for yourself so 2dust doesn't have to.
+ 
+
+OUTPUT:
+-------
+source_spec.dat:  SED of the source w/o extinction by shell
+
+?_spec.dat: SED of source
+	wavelength (microns)
+ 	flux (1Jy = 10^23 erg/s/cm2/sr/Hz...erg/s/cm3/sr
+ 
+?_stuff.dat: accounting information
+?_datf.dat : reddened stellar intensity for grid of radial/lat points
+ 
+   for each grid point:
+   radial distance (Rmin)
+   Latitude angle (rads)
+   luminosity (Lsun)
+   dust temperature (K)
+   wavelength (micron)
+   local mean spec intenst(erg/s/cm2/Hz/strrad)
+   tot spec. flux (erg/s/cm2)
+
+
+shell_dats.dat : local mean specific dust shell intensity and dust temp in K for each grid point
+		and for each wavelength, direct star contribution only   --> fed into mapspec.exe
+  
+  NQ = number quadrature grids, NQ2 = tot theta grids 0->pi
+
+  direct star contribution only
+
+  for each grid point and wavelength
+	local mean specific intensity (erg/s/cm2/Hz/strrad)
+ 	dust temperature (K)
+
+fort.9: 
+	(1)radial grid point
+	(2) lum/lum(radial point)
+	(3)ratio of stellar luminosity to calculated total luminosity (reddened stellar + dust shell)
+		characterizes goodness of model convergence
+		should be close to unity for well sampled shell
+	(4)
+ 	(5)grain temperature at minimum lat
+	(6)grain temperature at max lat
+	
+  The model has converged if all these ratio parameters haven't changed by more that CONDITION in const.f90
+
+
+****************
+* MAPSPEC.exe: *
+****************
+
+INPUT:
+-takes 2dust output and makes SEDs, surface brightness map, optical depth map (polar) for a given inclination angle
+
+shell_dats.dat is read as input : dust shell intensity output file from 2dust
+
+OUTPUT:
+source_spec.dat: SED of the source without extinction by the shell, compare with the model SED
+
+?_map.dat: wavelength, flux  -->input to mapgrid.exe
+
+?_spec.dat file: output SED w/o QH
+	wavelength    flux
+
+
+****************
+* MAPGRID.EXE: *
+****************
+
+INPUT:
+
+?_map.dat file: output map w/o QH
+
+
+
+
+OUTPUT:
+
+fits files of 
+
+the surface brightness: *_mapf*.fits  in mJy/arcsec^2
+optical depth : *_mapt_*.fits
+
+	near side of the pole is pointed in the -y direction
+
+
+
+ADDITIONAL USEFULL INFORMATION
+******************************
+
+const.f90:  defines the constants used in calculations
+
+	CONDITION: sets the convergence condition. When the fractional change between the luminosities of
+		the current and previous iterations at each radial grid is less than CONDITION, the current
+ 		model has converged and the iteration is terminated
+	NSIZE: defines the number of grids in the size space. The temp of dust grains will be followed for those NSIZE grain sizes
+		execution time is proportional to NSIZE when in expanded quantum heating mode
+
+	look-up tables are used to set dust temperature and intensity 
+
+		NGRID: defines the size of the look-up table
+		TBOT: lower range of table (minimum temp)
+		TTOP: upper range of table (max temp)
+
+
+: 
