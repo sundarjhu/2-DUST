@@ -1,0 +1,128 @@
+* 2dust.061115.tgz
+	Spline fitting subroutines (spline.f90 and splint.f90) are
+	replaced with a more robust version (mipcub.f90). 
+
+* 2dust.061101.tgz
+	A bug fix for mapgrid.f90 - two surface brightness maps were 
+	generated instead of surface brightness and optical depth maps.
+
+	A bug fix for mapspec.f90 - not reading the 2dust output properly 
+	in the anisotropic scattering mode.
+
+	A bug fix in mapspec.f90 - incorrect array referencing in the 
+	anisotropic scattering mode.
+
+* 2dust.060803.tgz
+	A bug has been fixed in dustprep.f90.  Some arrays are not set to 
+	the correct size and caused some compilers to fail.
+	
+	A bug has been fixed in mapspec.f90.  Local densities are not 
+	properly computed upon line integration over the bottom half of 
+	the projected map.  The 2dust main code has not been affected.  
+	However, the resulting SED and projected maps have been affected 
+	(maps more so than the SED).  This bug is the cause for the 
+	asymmetric looking projected map at 90 deg inclination (edge-on).  
+	This bug would lead to up to 10-20% error in surface brightness 
+	in the bottom half of the map and to 5-10% error in the SED.
+	
+	2dust models produced after mid-2004 need to be rechecked.
+	
+* 2dust.050805.tgz
+	A minor fix in mie.f90.  The Rooij & van der Stap criterion to 
+	trancate the recursion relation was not correctly implemented.
+
+* 2dust.041202.tgz
+	Expanded RT iteration (to follow Tdust for each species 
+	after a converged solution is obtained with "averaged" dust)
+	is fully functional.
+
+* 2dust.040925.tgz
+        Inserted readsed.f90 in place of agnprep.f90 for the public
+	release version.  
+		
+	A bug in computing the asymptotic parameters for the KMH and
+	Harrington (grain surface) averaging case was fixed.
+
+* 2dust.040414.tgz
+        Properly disabled the AGN mode in twodust.f90.
+
+* 2dust.040409.tgz
+	Reduced the number of calculations by employing another look-up
+	table in the main RT iteration.  So, it will take less computation 
+	time!  (However, it will need to generate a rather large look-up 
+	table of local dust densities at each line integration step, and 
+	it is done just before the main RT starts.) 
+ 	
+	Also, enabled an option to follow emission contribution from 
+	each dust species involved.  This is a prelude to (near future)
+	release of the quantum heating (non-linear heating of small 
+	grains) enabled version.  This expansion required some modification
+	in the algorithm where cross sections are computed.  So, using
+	this option with your old model parameters would not generate 
+	exactly the same cross sections.  The differences are minor, 
+	however.
+	
+	In order to directly get FITS images out of the mapgrid run, 
+	FITSIO routines are incorporated.
+
+* 2dust.031212.tgz
+	Minor improvements.
+	
+	Fixed a bug in the multiple composition layer mode (improper 
+	cross sections are referenced).
+
+* 2dust.031107.tar.gz
+	Updated the carriage control using "advance='no'" to follow
+	the latest f90/95 standard.
+
+	The bulk of the AGN mode is moved to a new subroutine "agnprep.f90".
+	However, this extension is not part of the public release (just
+	yet) and is not included in the tar package.
+
+* 2dust.030701.tar.gz
+	An erroneous mapspec.f90 subroutine was included in the 030625
+	distribution.  The bad mapspec would not properly define the
+	polar grid in mapping.
+
+	mapgrid.f90 has been updated to avoid possible "array out of
+	bounds" errors.
+
+* 2dust.030625.tar.gz
+	A new option is added when dust cross sections are calculated
+	in dustprep.f90.  This option allows you to average some size 
+	dependent quantities (such as Q values) over the size space 
+	giving weights on the surface area (based on the method described 
+	in Harrington et al. 1988, MNRAS, 231, 577).  This option is 
+	added as a prelude to the planned future upgrade to include 
+	the treatment of transiently heated particles.  Also, some 
+	routines in dustprep.f90 has been renewed.
+	
+	The users' manual is upgraded.  The new version explains the 
+	new averaging option mentioned above and has more step by step 
+	example to run the suite of 2-Dust codes.
+
+* 2dust.030608.tar.gz
+	When the optical depth along each characteristic is calculated
+	before the main iteration loop is initiated, a specific out of 
+	bounds location in the cross section array, KK(), is occasionally 
+	accessed.  Although it has been numerically taken care of (and 
+	thus it does not pose threats to the results), it was recently 
+	brought to my attention that such coding can end up in a compiler 
+	error when compiled with some smart compilers.  Therefore, the 
+	corresponding part of the code was fixed not to access out of 
+	bounds array locations at all times.
+	
+* 2dust.030507.tar.gz
+	THCRIT was not defined in mapspec.f90 for the case when
+	BFLAG is activated (i.e., there is a bicone opening in
+	the dust distribution).
+
+* 2dust.030128.tar.gz
+	problems in transferring double precision real numbers
+	between some subroutines when compiled in double precision.
+
+* 2dust.021212.tar.gz
+	Makefile has ignored some file dependencies.
+
+* 2dust.021105.tar.gz
+	Initial Public Release.
