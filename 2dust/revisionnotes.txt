@@ -1,3 +1,15 @@
+* 2dust.210223.tgz
+    geom.f90, gridgen.f90, and mindens.f90 were updated in 2014 
+    for automated MXSTEP/VSPACE calculation.
+    Additional minor changes to the following files:
+    const.f90
+        L52 increased TTOP to 2002.7 to account for dust species with higher Tcond
+    readsed.f90
+        L73 output formatting updated
+    gridgen.f90
+        L285, L299 write messages about characteristics intercepting central star 
+        to file instead of screen
+
 * 2dust.061115.tgz
 	Spline fitting subroutines (spline.f90 and splint.f90) are
 	replaced with a more robust version (mipcub.f90). 

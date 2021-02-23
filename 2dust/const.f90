@@ -49,7 +49,7 @@ MODULE CONST
 !!$    Specify min and max temperatures for TTABLE/BTABLE
 !!$---------------------------------------------------------------------
   REAL(PRC), PARAMETER :: TBOT =    2.7
-  REAL(PRC), PARAMETER :: TTOP = 1000.0
+  REAL(PRC), PARAMETER :: TTOP = 2002.7 ! increased from 1000 for species with high Tcond
 !!$---------------------------------------------------------------------
 END MODULE CONST
 !!$---------------------------------------------------------------------

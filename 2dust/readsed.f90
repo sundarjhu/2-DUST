@@ -70,7 +70,7 @@ SUBROUTINE READSED(MJTOT,DUM3,FnuSTAR,MJnu1,Inu1,LAMBDA,WT3,WT4,&
   ALLOCATE(DUMARR1(2,NPTS),STAT=IERROR)
   DUMARR1 = 0.0_PRC
   IF (IOFLAG == 0) THEN
-     WRITE(*,'("  Number of wavelength grid : ",i)') NPTS
+     WRITE(*,'("  Number of wavelength grid : ",i8)') NPTS  ! changed output format from ",i" to ",i8"
   END IF
   OPEN(UNIT=30,FILE='sourceflux.dat',STATUS='OLD',IOSTAT=IERROR)
   READ(30,*,IOSTAT=IERROR) SOLLUM

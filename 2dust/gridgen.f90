@@ -27,9 +27,10 @@ SUBROUTINE GRIDGEN(R,RLAYER,THETA,Z,CPHI,WT1,WT2,Y,STH,CTH,NBOUND,&
   REAL(PRC), DIMENSION(0:NZONE), INTENT(INOUT)        :: RLAYER
   REAL(PRC), DIMENSION(0:2*NQ+1), INTENT(INOUT) :: THETA
   REAL(PRC), DIMENSION(NQ), INTENT(INOUT)       :: CPHI,WT2,Z
-  REAL(PRC), DIMENSION(MXTH,NRAD), INTENT(INOUT)     :: Y,WT1,CTH,STH
+  REAL(PRC), DIMENSION(MXTH,NRAD), INTENT(INOUT)     :: Y,WT1
   INTEGER, DIMENSION(0:NZONE), INTENT(INOUT) :: NBOUND
   INTEGER, DIMENSION(NRAD), INTENT(INOUT) :: NK1,NK2,NK3
+  REAL(PRC), DIMENSION(MXTH,NRAD), INTENT(INOUT)     :: CTH,STH
 !!$---------------------------------------------------------------------
   INTEGER, EXTERNAL :: LOCATE
 !!$---------------------------------------------------------------------
@@ -37,8 +38,9 @@ SUBROUTINE GRIDGEN(R,RLAYER,THETA,Z,CPHI,WT1,WT2,Y,STH,CTH,NBOUND,&
   CHARACTER(30) :: DUMMY,QUAD
 !!$
   INTEGER :: IERROR,I,J,NC,IOFLAG,QLEN
-  REAL(PRC) :: DUM,GAMMA1
-  REAL(PRC), ALLOCATABLE, DIMENSION(:) :: RB,Q1,Q2,PTS,WTS
+  REAL(PRC) :: DUM,GAMMA1,ACCTH
+  REAL(PRC), ALLOCATABLE, DIMENSION(:) :: RB
+  REAL(PRC), ALLOCATABLE, DIMENSION(:) :: Q1,Q2,PTS,WTS
 !!$---------------------------------------------------------------------
 !!$  Retrieve quadrature parameters
 !!$---------------------------------------------------------------------
@@ -280,6 +282,7 @@ SUBROUTINE GRIDGEN(R,RLAYER,THETA,Z,CPHI,WT1,WT2,Y,STH,CTH,NBOUND,&
 !!$     Q1(I) = -1.0 * COS(ASIN((RMIN+R(1))/(2.*R(I))))
 !!$  END DO
   OPEN(UNIT=10,file=QUAD,status='old',POSITION='REWIND')
+  OPEN(UNIT=40,file='charintercept.dat') !!Write messages to file instead of screen
   DO J=1,NRAD
      READ(10,*) NC,NK1(J),NK2(J),NK3(J),Q2(J)
      Q1(J) = PI - ASIN((RMIN+R(1))/(2.*R(J)))
@@ -290,6 +293,13 @@ SUBROUTINE GRIDGEN(R,RLAYER,THETA,Z,CPHI,WT1,WT2,Y,STH,CTH,NBOUND,&
         WT1(I,J) = WTS(NK1(J)-I+1)
         STH(I,J) = SIN(PTS(NK1(J)-I+1))
         CTH(I,J) = COS(PTS(NK1(J)-I+1))
+
+        ACCTH = ACOS(CTH(I,J))
+        IF ((R(J)*SIN(PI-ACCTH) < 1.0) .AND. ((PI-ACCTH < PIO2) )) THEN
+           write(40,*) 'The characteristic intercepts the central star at',& !!Modified (*,*) to (40,*) to write to file
+                &I,J,CTH(I,J),360.*(PI-ACCTH)/TWOPI,R(J)*SIN(PI-ACCTH)
+        END IF
+
      END DO
      CALL GAULEG(Q2(J),Q1(J),PTS,WTS,NK2(J))
      DO I=1,NK2(J)
@@ -309,6 +319,7 @@ SUBROUTINE GRIDGEN(R,RLAYER,THETA,Z,CPHI,WT1,WT2,Y,STH,CTH,NBOUND,&
 !!$     write(13,*) (Y(I,J), I=1,NK1(J)+NK2(J)+NK3(J))
 !!$     write(13,*) (WT1(I,J), I=1,NK1(J)+NK2(J)+NK3(J))
 !!$     write(13,*) (CTH(I,J), I=1,NK1(J)+NK2(J)+NK3(J))
+!!$     write(*,*) J,Q1(J),(180.*ACOS(CTH(I,J))/PI, I=1,NK1(J)+NK2(J)+NK3(J))
   END DO
   CLOSE(UNIT=10)
   DEALLOCATE(PTS,WTS,STAT=IERROR)
