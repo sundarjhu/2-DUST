@@ -87,7 +87,7 @@ PROGRAM TWODUST
   INTEGER :: I,J,K,L,M,NW,NL,NR,NT,NP,NZ,NN,NZCNT,NTHHI,NTHLO,NRHI
   INTEGER :: NRLO,NQ2,NG,IERROR,IOFLAG,DFLAG,NLEN,N0,MXSTEP,MXTY,NGTY
   INTEGER :: NTEST,NTTEST,ITER,NS,MXTH,NRAD,NQ,NWAV,NZONE,SFLAG,NK,MXNK
-  INTEGER :: NFLAG,QHFLG,NK0L
+  INTEGER :: NFLAG,QHFLG,NK0L,MXFLAG
 !!$---------------------------------------------------------------------
   REAL(PRC) :: F1,F2,F3,RSTAR,TSTAR,TAU0,DUM1,DUM2,VSPACE,VELOCITY,BTOT
   REAL(PRC) :: DISTANCE,AA,BB,LUMINOSITY,KB,SOLLUM,MS,MAGB,TAGB,TS,BETA
@@ -299,6 +299,16 @@ PROGRAM TWODUST
      WRITE(*,'(" Error: Invalid density flag! ")')
      STOP
   END IF
+
+  IF ((F3 .LT. 1.0_PRC) .OR. (F3 .GT. F2)) THEN
+     F3 = 1.0_PRC
+     IF (IOFLAG == 0) THEN
+        WRITE(*,13)      
+        WRITE(*,'(" ### Rsw was not set properly: reset to Rsw = Rmin ### ")')         
+        WRITE(*,'(" ### Check your input radii again!!!               ### ")')         
+     ENDIF
+  ENDIF
+
   IF (IOFLAG == 0) THEN
      WRITE(*,13) 
      WRITE(*,*) NRAD,NQ          
@@ -569,20 +579,20 @@ PROGRAM TWODUST
   IF (IOFLAG  ==  0) THEN
      IF (DFLAG == 0) THEN
         WRITE(*,'(" Densities at the inner radius of the shell (Rmin) ")')
-        WRITE(*,'("     on the equator : ",ES10.4," g cm^-3 ")') &
+        WRITE(*,'("     on the equator : ",ES11.4," g cm^-3 ")') &
              RHOMIN * DFUNC(RMIN,PIO2)/RSTAR
-        WRITE(*,'("     along the pole : ",ES10.4," g cm^-3 ")') &
+        WRITE(*,'("     along the pole : ",ES11.4," g cm^-3 ")') &
              RHOMIN * DFUNC(RMIN,0.0_PRC)/RSTAR
-        WRITE(*,'("  Based on Tau = ",ES10.4," at ",ES10.4," micron")') &
+        WRITE(*,'("  Based on Tau = ",ES11.4," at ",ES11.4," micron")') &
              TAU0,30.0_PRC/FREQ(N0)
         WRITE(*,'("    ")')
      ELSE
         WRITE(*,'(" Densities at the inner radius of the shell (Rmin) ")')
-        WRITE(*,'("     on the equator : ",ES10.4," cm^-3 ")') &
+        WRITE(*,'("     on the equator : ",ES11.4," cm^-3 ")') &
              RHOMIN * DFUNC(RMIN,PIO2)/RSTAR
-        WRITE(*,'("     along the pole : ",ES10.4," cm^-3 ")') &
+        WRITE(*,'("     along the pole : ",ES11.4," cm^-3 ")') &
              RHOMIN * DFUNC(RMIN,0.0_PRC)/RSTAR
-        WRITE(*,'("  Based on Tau = ",ES10.4," at ",ES10.4," micron")') &
+        WRITE(*,'("  Based on Tau = ",ES11.4," at ",ES11.4," micron")') &
              TAU0,30.0_PRC/FREQ(N0)
         WRITE(*,'("    ")')
      END IF
@@ -600,24 +610,30 @@ PROGRAM TWODUST
 !!$---------------------------------------------------------------------  
 !!$  Convert mass from g into M_sun
 !!$---------------------------------------------------------------------  
-  MS   = MS * RSTAR * RSTAR / MSOL  
+  IF (MS .GT. 0.0_PRC) THEN
+     MS   = MS * RSTAR * RSTAR / MSOL  
+  ENDIF
   MAGB = MAGB * RSTAR * RSTAR / MSOL  
   DUM1 = RSTAR / (VELOCITY * YSEC)
 !!$---------------------------------------------------------------------  
 !!$  Duration of the phase in years
 !!$---------------------------------------------------------------------  
+  IF (MS .GT. 0.0_PRC) THEN
+     TS   = (RSW - RMIN) * DUM1
+  ENDIF
   TAGB = (RMAX - RSW) * DUM1
-  TS   = (RSW - RMIN) * DUM1
 !!$---------------------------------------------------------------------  
 !!$  Mass loss rates in M_sun/years
 !!$---------------------------------------------------------------------  
+  IF (MS .GT. 0.0_PRC) THEN
+     MDOTS   = MS / TS
+  ENDIF
   MDOTAGB = MAGB / TAGB
-  MDOTS   = MS / TS
   IF (IOFLAG  ==  0) THEN
      WRITE(*,'(" Physical Quantities of the Shells (dust only) ")')
      WRITE(*,'("                  Mass (Msun)    Duration (yrs)  &
           &Rate (Msun/yrs)")')
-     IF (RSW > 0.0_PRC) THEN
+     IF (MS .GT. 0.0_PRC) THEN
         WRITE(*,'("  Superwind  ",3(1X,ES15.5))') MS,TS,MDOTS
      END IF
      WRITE(*,'("     AGB     ",3(1X,ES15.5))') MAGB,TAGB,MDOTAGB
@@ -888,10 +904,10 @@ PROGRAM TWODUST
   DEALLOCATE(LAMBDA,STAT=IERROR)
 !!$---------------------------------------------------------------------
   IF (IOFLAG  ==  0) THEN
-     WRITE(*,'("  Source Luminosity: ", 1ES12.6, " L_sun. ")') SOLLUM
-     WRITE(*,'("  Source Radius    : ", 1ES12.6, " cm. ")') RSTAR
-     WRITE(*,'("  Inner Shell Size : ", 1ES12.6, " cm. ")') RMIN*RSTAR
-     WRITE(*,'("  Outer Shell Size : ", 1ES12.6, " cm. ")') RMAX*RSTAR
+     WRITE(*,'("  Source Luminosity: ", 1ES13.6, " L_sun. ")') SOLLUM
+     WRITE(*,'("  Source Radius    : ", 1ES13.6, " cm. ")') RSTAR
+     WRITE(*,'("  Inner Shell Size : ", 1ES13.6, " cm. ")') RMIN*RSTAR
+     WRITE(*,'("  Outer Shell Size : ", 1ES13.6, " cm. ")') RMAX*RSTAR
      WRITE(*,'("    ")')
      WRITE(*,'("    Proceed? [Y/N] >> ")',advance='no')
      READ(*,'(A)') CKFLG 
@@ -1157,8 +1173,10 @@ PROGRAM TWODUST
 !!$---------------------------------------------------------------------
 !!$  Set up grid for long characteristic line integration
 !!$---------------------------------------------------------------------
+  MXFLAG = 0
   IF (IOFLAG == 0) THEN
-     DO
+     DO         
+!!$        write(*,*) MXSTEP,MXFLAG
         ALLOCATE(RAT1(MXSTEP,MXTH,NRAD),STAT=IERROR)
         ALLOCATE(CTH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
         ALLOCATE(STH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
@@ -1169,43 +1187,57 @@ PROGRAM TWODUST
         ALLOCATE(ZONE(MXSTEP,MXTH,NRAD),STAT=IERROR)
         CALL GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
              NWAV,NZONE,MXTH,MXSTEP,VSPACE,DFLAG,IOFLAG,RAT1,CTH0, &
-             STH0,RZERO,DRONE,N1,NSTEP,ZONE)
-        WRITE(*,'("   Change MXSTEP & VSPACE? [Y/N] >> ")',advance='no')
-        READ(*,'(A)') CKFLG 
-        IF (CKFLG == ' ' .OR. CKFLG == "y" .OR. CKFLG == "Y") THEN
-           DEALLOCATE(RAT1,CTH0,STH0,RZERO,DRONE,NSTEP,N1,ZONE,STAT=IERROR)
-           WRITE(*,'("   Enter new MXSTEP (",i5,") >> ")',advance='no') MXSTEP
-           READ(*,*) DUMMY
-           IF (DUMMY == ' ') THEN
-              MXSTEP = MXSTEP
+             STH0,RZERO,DRONE,N1,NSTEP,ZONE,MXFLAG)
+!!$        write(*,*) MXSTEP,MXFLAG
+!!$        write(*,*)
+        IF (MXFLAG .GE. 2) THEN
+           WRITE(*,'("   Change VSPACE? [Y/N] >> ")',advance='no')
+           READ(*,'(A)') CKFLG 
+           IF (CKFLG == ' ' .OR. CKFLG == "y" .OR. CKFLG == "Y") THEN
+              DEALLOCATE(RAT1,CTH0,STH0,RZERO,DRONE,NSTEP,N1,ZONE,STAT=IERROR)
+!!$           WRITE(*,'("   Enter new MXSTEP (",i5,") >> ")',advance='no') MXSTEP
+!!$           READ(*,*) DUMMY
+!!$           IF (DUMMY == ' ') THEN
+!!$              MXSTEP = MXSTEP
+!!$           ELSE
+!!$              read(DUMMY,*) MXSTEP
+!!$           END IF
+              WRITE(*,'("   Enter new VSPACE (",f5.2,") >> ")',advance='no') VSPACE
+              READ(*,'(A)') DUMMY
+              IF (DUMMY == ' ') THEN
+                 VSPACE = VSPACE
+              ELSE
+                 read(DUMMY,*) VSPACE
+              END IF
+              WRITE(*,13)
+              MXFLAG = 0 ! restart this do loop anew
            ELSE
-              read(DUMMY,*) MXSTEP
+              WRITE(*,13)
+              EXIT
            END IF
-           WRITE(*,'("   Enter new VSPACE (",f5.2,") >> ")',advance='no') VSPACE
-           READ(*,'(A)') DUMMY
-           IF (DUMMY == ' ') THEN
-              VSPACE = VSPACE
-           ELSE
-              read(DUMMY,*) VSPACE
-           END IF
-           WRITE(*,13)
         ELSE
-           WRITE(*,13)
-           EXIT
-        END IF
-     END DO
+           DEALLOCATE(RAT1,CTH0,STH0,RZERO,DRONE,NSTEP,N1,ZONE,STAT=IERROR)
+        ENDIF
+     ENDDO
   ELSE
-     ALLOCATE(RAT1(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(CTH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(STH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(RZERO(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(DRONE(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(NSTEP(MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(N1(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     ALLOCATE(ZONE(MXSTEP,MXTH,NRAD),STAT=IERROR)
-     CALL GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
-          NWAV,NZONE,MXTH,MXSTEP,VSPACE,DFLAG,IOFLAG,RAT1,CTH0, &
-          STH0,RZERO,DRONE,N1,NSTEP,ZONE)
+     DO         
+!!$        write(*,*) MXSTEP,MXFLAG
+        ALLOCATE(RAT1(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(CTH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(STH0(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(RZERO(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(DRONE(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(NSTEP(MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(N1(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        ALLOCATE(ZONE(MXSTEP,MXTH,NRAD),STAT=IERROR)
+        CALL GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
+             NWAV,NZONE,MXTH,MXSTEP,VSPACE,DFLAG,IOFLAG,RAT1,CTH0, &
+             STH0,RZERO,DRONE,N1,NSTEP,ZONE,MXFLAG)
+!!$        write(*,*) MXSTEP,MXFLAG
+!!$        write(*,*)
+        IF (MXFLAG == 2) EXIT
+        DEALLOCATE(RAT1,CTH0,STH0,RZERO,DRONE,NSTEP,N1,ZONE,STAT=IERROR)
+     ENDDO
   END IF
 !!$---------------------------------------------------------------------  
 !!$  DRTWO is DRONE (local step size) * rho (local density), which is 
@@ -1713,9 +1745,11 @@ PROGRAM TWODUST
   WRITE(1,409) MAGB
   WRITE(1,410) TAGB
   WRITE(1,411) MDOTAGB
-  WRITE(1,417) MS
-  WRITE(1,418) TS
-  WRITE(1,419) MDOTS
+  IF (MS .GT. 0.0_PRC) THEN 
+     WRITE(1,417) MS
+     WRITE(1,418) TS
+     WRITE(1,419) MDOTS
+  ENDIF
   DO I=1,NZONE
      WRITE(1,'("Layer #",i2)') I
      WRITE(1,425) NBOUND(I-1),NBOUND(I)
@@ -2184,7 +2218,7 @@ PROGRAM TWODUST
 !!$---------------------------------------------------------------------  
                        IF (LS*0.000001_PRC <= DUM1) THEN
                           LS = LS + DUM1 ! line step integration
- !!$                         OLDLS = OLDLS + DUM2
+!!$                         OLDLS = OLDLS + DUM2
                        ELSE
                           EXIT
                        END IF
@@ -2486,6 +2520,7 @@ PROGRAM TWODUST
   WRITE(1,402) RMAX/RMIN
   WRITE(1,403) NRAD
   WRITE(1,415) NQ
+  WRITE(1,428) MXSTEP,VSPACE
   WRITE(1,404) A+1,B
   IF (DFLAG == 0) THEN
      WRITE(1,420) RHOMIN * DFUNC(RMIN,PIO2) / RSTAR
@@ -2503,9 +2538,11 @@ PROGRAM TWODUST
   WRITE(1,409) MAGB
   WRITE(1,410) TAGB
   WRITE(1,411) MDOTAGB
-  WRITE(1,417) MS
-  WRITE(1,418) TS
-  WRITE(1,419) MDOTS
+  IF (MS .GT. 0.0_PRC) THEN
+     WRITE(1,417) MS
+     WRITE(1,418) TS
+     WRITE(1,419) MDOTS
+  ENDIF
   DO I=1,NZONE
      WRITE(1,'("Layer #",i2)') I
      WRITE(1,425) NBOUND(I-1),NBOUND(I)
@@ -2555,25 +2592,26 @@ PROGRAM TWODUST
 406 FORMAT(' Wavelength[um]    Kappa[cm2]      Sigma[cm2]   ')             
 407 FORMAT(3(ES14.6,2X))
 408 FORMAT('This run converged in ',I2,' iterations.') 
-409 FORMAT('Total dust mass in AGB (R > Rsw) shell: ',ES12.6,' solar masses.')
-410 FORMAT('Timescale for mass-loss on AGB: ',ES12.6,' years.')
-411 FORMAT('AGB dust mass-loss rate: ',ES12.6,' solar masses/year.')
-412 FORMAT('Stellar radius (cm): ',ES12.6)
+409 FORMAT('Total dust mass in AGB (R > Rsw) shell: ',ES13.6,' solar masses.')
+410 FORMAT('Timescale for mass-loss on AGB: ',ES13.6,' years.')
+411 FORMAT('AGB dust mass-loss rate: ',ES13.6,' solar masses/year.')
+412 FORMAT('Stellar radius (cm): ',ES13.6)
 413 FORMAT('Outflow velocity (km/s): ',F12.2)
-414 FORMAT('Optical depth is ',F10.5,' at ',ES12.6,' microns.')
-415 FORMAT('Number of Theta/phi'' grid used: ',I5)
-416 FORMAT('Source luminosity (L_sun): ',ES12.6)
-417 FORMAT('Total dust mass in superwind (R < Rsw) shell: ',ES12.6,' solar masses.')
-418 FORMAT('Timescale for mass-loss in superwind: ',ES12.6,' years.')
-419 FORMAT('Superwind dust mass-loss rate: ',ES12.6,' solar masses/year.')
-420 FORMAT('Density at inner radius on the equator (g/cc): ',ES10.4)
-421 FORMAT('Density at inner radius on the pole    (g/cc): ',ES10.4)
+414 FORMAT('Optical depth is ',F12.5,' at ',ES13.6,' microns.')
+415 FORMAT('Number of Theta/phi grid used: ',I5)
+416 FORMAT('Source luminosity (L_sun): ',ES13.6)
+417 FORMAT('Total dust mass in superwind (R < Rsw) shell: ',ES13.6,' solar masses.')
+418 FORMAT('Timescale for mass-loss in superwind: ',ES13.6,' years.')
+419 FORMAT('Superwind dust mass-loss rate: ',ES13.6,' solar masses/year.')
+420 FORMAT('Density at inner radius on the equator (g/cc): ',ES11.4)
+421 FORMAT('Density at inner radius on the pole    (g/cc): ',ES11.4)
 422 FORMAT('# of grain types = ',I2)
-423 FORMAT('Grain #',I2,': dist.type=',I2,', density= ',F5.2,', numwt= ',F8.6)
-424 FORMAT(' Layer from ',ES8.2,' to ',ES8.2,' stellar radii.')
+423 FORMAT('Grain #',I2,': dist.type=',I2,', density= ',F9.2,', numwt= ',F13.6)
+424 FORMAT(' Layer from ',ES9.2,' to ',ES9.2,' stellar radii.')
 425 FORMAT(' Layer from ',I2,' to ',I2,' radial zones.')
-426 FORMAT('Size/Composition averaged grain mass (g): ',ES12.6)
+426 FORMAT('Size/Composition averaged grain mass (g): ',ES13.6)
 427 FORMAT(' Epoch of composition change: ',F8.1,' years ago.')
+428 FORMAT(' MXSTEP: ',I8,', VSPACE: ',F11.4)
 !!$---------------------------------------------------------------------
 2000 CONTINUE
 !!$---------------------------------------------------------------------

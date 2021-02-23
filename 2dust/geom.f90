@@ -1,7 +1,7 @@
 !!$---------------------------------------------------------------------
 SUBROUTINE GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
      NWAV,NZONE,MXTH,MXSTEP,VSPACE,DFLAG,IOFLAG,RAT1,CTH0,&
-     STH0,RZERO,DRONE,N,NSTEP,ZONE)
+     STH0,RZERO,DRONE,N,NSTEP,ZONE,MXFLAG)
 !!$---------------------------------------------------------------------
 !!$  This subroutine calculates and saves the geometrical information 
 !!$  (which is the same for each iteration) for the stepping process 
@@ -11,7 +11,8 @@ SUBROUTINE GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
 !!$---------------------------------------------------------------------
   IMPLICIT NONE
 !!$---------------------------------------------------------------------
-  INTEGER, INTENT(IN) :: NRAD,NWAV,NZONE,MXSTEP,DFLAG,IOFLAG,MXTH
+  INTEGER, INTENT(IN) :: NRAD,NWAV,NZONE,DFLAG,IOFLAG,MXTH
+  INTEGER, INTENT(INOUT) :: MXSTEP,MXFLAG
 !!$---------------------------------------------------------------------
   REAL(PRC), INTENT(IN) :: VSPACE,RHOMIN
   REAL(PRC), DIMENSION(0:NRAD+1), INTENT(IN) :: R
@@ -21,7 +22,7 @@ SUBROUTINE GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
   REAL(PRC), DIMENSION(NWAV,NZONE), INTENT(IN) :: KK
   REAL(PRC), DIMENSION(MXSTEP,MXTH,NRAD), INTENT(INOUT) :: RAT1,CTH0,&
        STH0,RZERO,DRONE
-!!$---------------------------------------------------------------------
+!!$--------------------------------------------------------------------
   INTEGER, DIMENSION(NRAD), INTENT(INOUT)             :: NK1,NK2,NK3
   INTEGER, DIMENSION(MXTH,NRAD), INTENT(INOUT)        :: NSTEP
   INTEGER, DIMENSION(MXSTEP,MXTH,NRAD), INTENT(INOUT) :: N,ZONE
@@ -58,10 +59,10 @@ SUBROUTINE GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
         NN    = 0
         NNN   = 0
         ACCTH = ACOS(CTH(K,L))
-        IF (R(L)*SIN(PI-ACCTH) < 1.0) THEN
-           write(*,*) 'The characteristic intercepts the central star at',&
-                &L,K,360.*(PI-ACCTH)/TWOPI,R(L)*SIN(PI-ACCTH)
-        END IF
+!!$        IF ((R(L)*SIN(PI-ACCTH) < 1.0) .AND. ((PI-ACCTH < PIO2) )) THEN
+!!$           write(*,*) 'The characteristic intercepts the central star at',&
+!!$                &L,K,CTH(K,L),360.*(PI-ACCTH)/TWOPI,R(L)*SIN(PI-ACCTH)
+!!$        END IF
 !!$---------------------------------------------------------------------
 !!$     Main loop along each long characteristic
 !!$---------------------------------------------------------------------
@@ -314,14 +315,25 @@ SUBROUTINE GEOM(R,CTH,NK1,NK2,NK3,RLAYER,AVGMASS,RHOMIN,KK,NRAD, &
      WRITE(*,'("   Minimum stepsize         : ",F15.6)') MINDR1
      WRITE(*,'("   Maximum stepsize         : ",F15.6)') MAXVAL(DRONE)
      WRITE(*,'("   Minimum radial grid size : ",F15.6)') R(2)-R(1)
-     IF (OVERCNT > 0) THEN
+  ENDIF
+  IF ((OVERCNT > 0) .AND. (MXFLAG == 0)) THEN
+     IF (IOFLAG == 0) THEN
         WRITE(*,'("   Max steps (",i4,") exhausted ",i4,"/",i4," times")') &
              MXSTEP,OVERCNT,SUM(NK1)+SUM(NK2)+SUM(NK3)
-     ELSE
+     ENDIF
+     MXSTEP = MXSTEP * 2
+  ELSE
+     IF (IOFLAG == 0) THEN        
         WRITE(*,'("   Max number of steps      :  ",i7)') MAXVAL(NSTEP)      
-     END IF
-     WRITE(*,'("  ")')
+        WRITE(*,'("  ")')
+     ENDIF
+     MXSTEP = MAXVAL(NSTEP)      
+     MXFLAG = MXFLAG + 1
   END IF
+  IF (IOFLAG == 0) THEN
+     WRITE(*,'("   MXSTEP updated to:  ",i7)') MXSTEP
+     WRITE(*,'("     ")')
+  ENDIF
 !!$  do l=1,NRAD
 !!$     do k=1,nk1(l)+nk2(L)+nk3(L)
 !!$        do ns=1,nstep(k,l)

@@ -23,7 +23,7 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
   REAL(PRC), ALLOCATABLE, DIMENSION(:) :: PTS,WTS,PTS1,WTS1
 !!$---------------------------------------------------------------------
-  INTEGER :: I,J,K,NN,IERROR
+  INTEGER :: I,J,K,NN,IERROR,NQUAD
   REAL(PRC) :: DUM1,DUM2
 !!$---------------------------------------------------------------------
   REAL(PRC), EXTERNAL :: DFUNC
@@ -31,10 +31,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$  Determine mass of the AGB and superwind shells
 !!$---------------------------------------------------------------------
-  ALLOCATE(PTS(NQ),STAT=IERROR)
-  ALLOCATE(WTS(NQ),STAT=IERROR)
-  ALLOCATE(PTS1(NQ),STAT=IERROR)
-  ALLOCATE(WTS1(NQ),STAT=IERROR)
+  NQUAD = 1024
+  ALLOCATE(PTS(NQUAD),STAT=IERROR)
+  ALLOCATE(WTS(NQUAD),STAT=IERROR)
+  ALLOCATE(PTS1(NQUAD),STAT=IERROR)
+  ALLOCATE(WTS1(NQUAD),STAT=IERROR)
 !!$---------------------------------------------------------------------
   IF (BFLAG == 1) THEN
      IF (DFLAG == 0) THEN
@@ -43,15 +44,15 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      Superwind shell mass (Rmin to Rsw)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RMIN,RSW,PTS,WTS,NQ)
+        CALL GAULEG(RMIN,RSW,PTS,WTS,NQUAD) ! radial sampling
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD) ! lat sampling
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -61,11 +62,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -76,15 +77,15 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      AGB shell mass (Rmsw to Rmax)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RSW,RMAX,PTS,WTS,NQ)
+        CALL GAULEG(RSW,RMAX,PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -94,11 +95,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -122,15 +123,15 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$      Rmin to RLAYER(NN)
 !!$---------------------------------------------------------------------
               DO K=1,NN
-                 CALL GAULEG(RLAYER(K-1),RLAYER(K),PTS,WTS,NQ)
+                 CALL GAULEG(RLAYER(K-1),RLAYER(K),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-                 CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+                 CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD)
                  DUM1 = 0.0_PRC
-                 DO I=1,NQ
+                 DO I=1,NQUAD
                     DUM2 = 0.0_PRC
-                    DO J=1,NQ
+                    DO J=1,NQUAD
                        DUM2 = DUM2 + WTS1(J) * SIN(PTS1(J)) * &
                             DFUNC(PTS(I),PTS1(J))
                     END DO
@@ -141,11 +142,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-                 CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+                 CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
                  DUM1 = 0.0_PRC
-                 DO I=1,NQ
+                 DO I=1,NQUAD
                     DUM2 = 0.0_PRC
-                    DO J=1,NQ
+                    DO J=1,NQUAD
                        DUM2 = DUM2 + WTS1(J) * SIN(PTS1(J)) * &
                             DFUNC(PTS(I),PTS1(J))
                     END DO
@@ -162,12 +163,12 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RLAYER(NN),RSW,PTS,WTS,NQ)
-        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+        CALL GAULEG(RLAYER(NN),RSW,PTS,WTS,NQUAD)
+        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -177,11 +178,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -197,15 +198,15 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      Rsw to RLAYER(NN+1)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RSW,RLAYER(NN+1),PTS,WTS,NQ)
+        CALL GAULEG(RSW,RLAYER(NN+1),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -215,11 +216,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -231,15 +232,15 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
         IF (RLAYER(NN+1) < RMAX) THEN
            DO K=NN+1,NZONE-1
-              CALL GAULEG(RLAYER(K),RLAYER(K+1),PTS,WTS,NQ)
+              CALL GAULEG(RLAYER(K),RLAYER(K+1),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
 !!$        Bicone (0 to THCRIT)
 !!$---------------------------------------------------------------------
-              CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQ)
+              CALL GAULEG(0.0_PRC,THCRIT,PTS1,WTS1,NQUAD)
               DUM1 = 0.0_PRC
-              DO I=1,NQ
+              DO I=1,NQUAD
                  DUM2 = 0.0_PRC
-                 DO J=1,NQ
+                 DO J=1,NQUAD
                     DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J)) &
                          * DFUNC(PTS(I),PTS1(J))
                  END DO
@@ -249,11 +250,11 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$        Donut proper (THCRIT to PI/2)
 !!$---------------------------------------------------------------------
-              CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQ)
+              CALL GAULEG(THCRIT,PIO2,PTS1,WTS1,NQUAD)
               DUM1 = 0.0_PRC
-              DO I=1,NQ
+              DO I=1,NQUAD
                  DUM2 = 0.0_PRC
-                 DO J=1,NQ
+                 DO J=1,NQUAD
                     DUM2 = DUM2 + WTS1(J) * SIN(PTS1(J)) &
                          * DFUNC(PTS(I),PTS1(J))
                  END DO
@@ -272,13 +273,13 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      Superwind shell mass (Rmin to Rsw)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RMIN,RSW,PTS,WTS,NQ)
+        CALL GAULEG(RMIN,RSW,PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -288,13 +289,13 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      AGB shell mass (Rmsw to Rmax)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RSW,RMAX,PTS,WTS,NQ)
+        CALL GAULEG(RSW,RMAX,PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -317,13 +318,13 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$      Rmin to RLAYER(NN)
 !!$---------------------------------------------------------------------
               DO K=1,NN
-                 CALL GAULEG(RLAYER(K-1),RLAYER(K),PTS,WTS,NQ)
+                 CALL GAULEG(RLAYER(K-1),RLAYER(K),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
-                 CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+                 CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
                  DUM1 = 0.0_PRC
-                 DO I=1,NQ
+                 DO I=1,NQUAD
                     DUM2 = 0.0_PRC
-                    DO J=1,NQ
+                    DO J=1,NQUAD
                        DUM2 = DUM2 + WTS1(J) * SIN(PTS1(J)) * &
                             DFUNC(PTS(I),PTS1(J))
                     END DO
@@ -336,12 +337,12 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      RLAYER(NN) to Rsw
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RLAYER(NN),RSW,PTS,WTS,NQ)
-        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(RLAYER(NN),RSW,PTS,WTS,NQUAD)
+        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -355,13 +356,13 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
 !!$      Rsw to RLAYER(NN+1)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(RSW,RLAYER(NN+1),PTS,WTS,NQ)
+        CALL GAULEG(RSW,RLAYER(NN+1),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
-        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+        CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
         DUM1 = 0.0_PRC
-        DO I=1,NQ
+        DO I=1,NQUAD
            DUM2 = 0.0_PRC
-           DO J=1,NQ
+           DO J=1,NQUAD
               DUM2 = DUM2 + WTS1(J)*SIN(PTS1(J))*DFUNC(PTS(I),PTS1(J))
            END DO
            DUM1 = DUM1 + WTS(I) * DUM2 * PTS(I) * PTS(I)
@@ -372,13 +373,13 @@ SUBROUTINE SHMASS(RHOMIN,RLAYER,AVGMASS,NQ,NZONE,DFLAG,MAGB,MS)
 !!$---------------------------------------------------------------------
         IF (RLAYER(NN+1) < RMAX) THEN
            DO K=NN+1,NZONE-1
-              CALL GAULEG(RLAYER(K),RLAYER(K+1),PTS,WTS,NQ)
+              CALL GAULEG(RLAYER(K),RLAYER(K+1),PTS,WTS,NQUAD)
 !!$---------------------------------------------------------------------
-              CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQ)
+              CALL GAULEG(0.0_PRC,PIO2,PTS1,WTS1,NQUAD)
               DUM1 = 0.0_PRC
-              DO I=1,NQ
+              DO I=1,NQUAD
                  DUM2 = 0.0_PRC
-                 DO J=1,NQ
+                 DO J=1,NQUAD
                     DUM2 = DUM2 + WTS1(J) * SIN(PTS1(J)) * &
                          DFUNC(PTS(I),PTS1(J))
                  END DO

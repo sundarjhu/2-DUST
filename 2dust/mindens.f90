@@ -49,7 +49,7 @@ SUBROUTINE MINDENS(RLAYER,KK,AVGMASS,NWAV,NZONE,TAU0,N0,NQ,DFLAG,RHOMIN)
 
   REAL(PRC), EXTERNAL :: DFUNC
 
-  NQUAD = NQ*NQ
+  NQUAD = 1024
 !!$---------------------------------------------------------------------
 !!$  Determine "density" @ Rmin (RHOMIN) along the equator
 !!$---------------------------------------------------------------------
@@ -62,6 +62,7 @@ SUBROUTINE MINDENS(RLAYER,KK,AVGMASS,NWAV,NZONE,TAU0,N0,NQ,DFLAG,RHOMIN)
         CALL GAULEG(RLAYER(K-1),RLAYER(K),PTS,WTS,NQUAD)
         DO I=1,NQUAD
            DUM1 = DUM1 + WTS(I)*DFUNC(PTS(I),PIO2)
+!!$           write(*,*) I,DUM1,WTS(I)*DFUNC(PTS(I),PIO2),PTS(I),WTS(I)
         END DO
 !!$        write(*,*) RLAYER(K-1),RLAYER(K),DUM1,KK(N0,K),AVGMASS(K)
         RHOMIN = RHOMIN + (KK(N0,K)/AVGMASS(K))*DUM1
@@ -78,6 +79,7 @@ SUBROUTINE MINDENS(RLAYER,KK,AVGMASS,NWAV,NZONE,TAU0,N0,NQ,DFLAG,RHOMIN)
      END DO
   END IF
   DEALLOCATE(PTS,WTS)
+!!$  write(*,*) TAU0,N0,RHOMIN
   RHOMIN = TAU0/RHOMIN
 !!$  write(*,*) TAU0,N0,RHOMIN
 !!$---------------------------------------------------------------------
